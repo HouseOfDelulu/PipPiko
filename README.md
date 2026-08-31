@@ -14,7 +14,7 @@ An internet connection for the initial model download
 Sufficient RAM/storage to run the local model
 
 🚀 Installation
-1. Clone the Repository
+1.Clone the Repository
 Clone the repository using Git:
 git clone <your-repository-url>
 
@@ -34,7 +34,7 @@ transformers
 accelerate
 torch
 
-3. Running the Application
+3.Running the Application
 Start PipPiko using:
 
 python app.py
