@@ -14,36 +14,41 @@ An internet connection for the initial model download
 Sufficient RAM/storage to run the local model
 
 🚀 Installation
-1.Clone the Repository
+1. Clone the Repository
+
 Clone the repository using Git:
+
 git clone <your-repository-url>
 
-Then navigate into the project:
+Navigate into the project directory:
+
 cd pip_shopping_assistant
 
-Alternatively, download the repository as a ZIP file and extract it.
+Alternatively, you can download the repository as a ZIP file and extract it.
 
-2.Install Dependencies
-Install all required Python packages:
+2. Install Dependencies
+
+Install all required Python packages using:
 
 pip install -r requirements.txt
 
-The requirements file installs the necessary dependencies, including:
+The requirements.txt file installs the necessary dependencies, including:
+
 flask
 transformers
 accelerate
 torch
+▶️ Running the Application
 
-3.Running the Application
 Start PipPiko using:
 
 python app.py
 
-When launched, Pip will:
+When launched, PipPiko will:
 
-Start loading the Qwen model in a background thread.
+Load the local Qwen language model in a background thread.
 Start the Flask web server.
-Run the server on port 5000.
+Run the application on port 5000.
 Automatically open the application in your browser.
 
 The application will be available at:
