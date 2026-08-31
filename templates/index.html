@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pip — Shopping Assistant</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #FBF8FF;
+    --panel: #FFFFFF;
+    --ink: #1D1B33;
+    --ink-soft: #6B678A;
+    --violet: #6C5CE7;
+    --violet-deep: #5541D8;
+    --mint: #00C99A;
+    --coral: #FF8FA3;
+    --coral-deep: #FF6F8B;
+    --line: #E9E5F7;
+    --shadow: 0 8px 24px rgba(108,92,231,0.08);
+    --radius-lg: 28px;
+    --radius-md: 18px;
+    --radius-sm: 12px;
+  }
+
+  *{ box-sizing: border-box; }
+  html, body { height: 100%; }
+  body{
+    margin:0;
+    background: var(--bg);
+    background-image:
+      radial-gradient(circle at 8% 12%, rgba(108,92,231,0.07), transparent 40%),
+      radial-gradient(circle at 92% 88%, rgba(0,201,154,0.07), transparent 40%);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3, .display { font-family: 'Fredoka', sans-serif; }
+
+  .app{
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    min-height: 100vh;
+  }
+
+  /* ---------- Companion panel ---------- */
+  .companion-panel{
+    background: linear-gradient(180deg, #F1ECFF 0%, #FBF8FF 55%);
+    border-right: 1px solid var(--line);
+    padding: 32px 26px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+
+  .brand{
+    display:flex; align-items:center; gap:10px;
+  }
+  .brand-dot{
+    width:10px; height:10px; border-radius:50%;
+    background: var(--mint);
+    box-shadow: 0 0 0 4px rgba(0,201,154,0.15);
+  }
+  .brand span{
+    font-size: 14px; color: var(--ink-soft); font-weight:600; letter-spacing: 0.2px;
+  }
+
+  .robot-stage{
+    display:flex; flex-direction:column; align-items:center;
+    padding: 18px 0 4px;
+  }
+
+  .robot-wrap{
+    width: 148px; height: 148px;
+    animation: float 4.5s ease-in-out infinite;
+  }
+  @keyframes float{
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-8px); }
+  }
+
+  .antenna-ball{
+    animation: pulse-ball 2.2s ease-in-out infinite;
+    transform-origin: center;
+  }
+  @keyframes pulse-ball{
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.55; }
+  }
+
+  .eye{ transform-origin: center; }
+  .robot-wrap.blinking .eye{ animation: blink 0.22s ease-in-out; }
+  @keyframes blink{
+    0%, 100% { transform: scaleY(1); }
+    50% { transform: scaleY(0.08); }
+  }
+
+  .robot-wrap.thinking .antenna-ball{
+    animation: pulse-ball 0.6s ease-in-out infinite;
+  }
+  .robot-wrap.thinking .body-screen{
+    animation: screen-glow 0.9s ease-in-out infinite;
+  }
+  @keyframes screen-glow{
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+  }
+
+  .robot-name{
+    margin: 12px 0 2px;
+    font-size: 22px;
+    font-weight: 600;
+  }
+  .robot-status{
+    font-size: 13.5px;
+    color: var(--ink-soft);
+    min-height: 18px;
+    display:flex; align-items:center; gap:6px;
+  }
+  .status-dots{ display:inline-flex; gap:3px; }
+  .status-dots span{
+    width:4px; height:4px; border-radius:50%; background: var(--violet);
+    animation: dot-bounce 1s infinite ease-in-out;
+  }
+  .status-dots span:nth-child(2){ animation-delay: 0.15s; }
+  .status-dots span:nth-child(3){ animation-delay: 0.3s; }
+  @keyframes dot-bounce{
+    0%, 80%, 100% { transform: translateY(0); opacity: 0.5; }
+    40% { transform: translateY(-3px); opacity: 1; }
+  }
+  .status-dots.hidden{ display:none; }
+
+  .slots{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    padding: 18px 18px 6px;
+    box-shadow: var(--shadow);
+  }
+  .slots h3{
+    margin: 0 0 12px;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--ink);
+  }
+  .slot-row{
+    display:flex; justify-content: space-between; align-items:center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 13.5px;
+  }
+  .slot-row:last-child{ border-bottom: none; }
+  .slot-label{ color: var(--ink-soft); font-weight: 500; }
+  .slot-value{
+    font-weight: 600; color: var(--ink);
+    max-width: 130px; text-align: right;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .slot-value.empty{ color: #C7C3DE; font-weight: 500; }
+  /* "Any" is an answer, not a blank — but it isn't a constraint either, so it
+     reads softer than a brand the user actually picked. */
+  .slot-value.open{ color: var(--ink-soft); font-weight: 500; }
+  .slot-value.filled{ animation: pop-in 0.35s ease; }
+  @keyframes pop-in{
+    0% { transform: scale(0.85); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .skip-btn{
+    margin-top: auto;
+    background: var(--violet);
+    border: 1.5px solid var(--violet);
+    color: #fff;
+    border-radius: var(--radius-sm);
+    padding: 11px 14px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-bottom: 10px;
+    transition: filter 0.15s, opacity 0.15s;
+  }
+  .skip-btn:hover:not(:disabled){ filter: brightness(1.08); }
+  .skip-btn:disabled{ opacity: 0.45; cursor: default; }
+  .skip-btn:focus-visible{ outline: 2px solid var(--violet-deep); outline-offset: 2px; }
+
+  .restart-btn{
+    background: none;
+    border: 1.5px solid var(--line);
+    color: var(--ink-soft);
+    border-radius: var(--radius-sm);
+    padding: 11px 14px;
+    font-family: 'Inter', sans-serif;
+    font-size: 13.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .restart-btn:hover{ border-color: var(--violet); color: var(--violet-deep); }
+  .restart-btn:focus-visible{ outline: 2px solid var(--violet); outline-offset: 2px; }
+
+  /* ---------- Chat panel ---------- */
+  .chat-panel{
+    display:flex; flex-direction:column;
+    height: 100vh;
+  }
+
+  .chat-log{
+    flex: 1;
+    overflow-y: auto;
+    padding: 36px clamp(20px, 6vw, 90px) 20px;
+    display:flex; flex-direction:column; gap: 16px;
+  }
+
+  .msg-row{ display:flex; gap: 10px; max-width: 620px; }
+  .msg-row.user{ align-self: flex-end; flex-direction: row-reverse; }
+  .msg-row.bot{ align-self: flex-start; }
+
+  .msg-avatar{
+    width: 30px; height: 30px; border-radius: 50%;
+    flex-shrink: 0;
+    display:flex; align-items:center; justify-content:center;
+    background: var(--violet);
+    margin-top: 2px;
+  }
+  .msg-avatar svg{ width: 18px; height: 18px; }
+  .msg-row.user .msg-avatar{ background: var(--coral); }
+
+  .bubble{
+    padding: 12px 16px;
+    border-radius: var(--radius-sm);
+    font-size: 14.5px;
+    line-height: 1.5;
+    animation: bubble-in 0.25s ease;
+  }
+  @keyframes bubble-in{
+    0% { opacity: 0; transform: translateY(6px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  .msg-row.bot .bubble{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-top-left-radius: 4px;
+    color: var(--ink);
+  }
+  .msg-row.user .bubble{
+    background: var(--violet);
+    color: white;
+    border-top-right-radius: 4px;
+  }
+
+  .typing-row{ align-self: flex-start; display:flex; gap:10px; }
+  .typing-bubble{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    border-top-left-radius: 4px;
+    padding: 14px 16px;
+    display:flex; gap: 4px; align-items:center;
+  }
+  .typing-bubble span{
+    width:6px; height:6px; border-radius:50%; background: #C7C3DE;
+    animation: dot-bounce 1s infinite ease-in-out;
+  }
+  .typing-bubble span:nth-child(2){ animation-delay: 0.15s; }
+  .typing-bubble span:nth-child(3){ animation-delay: 0.3s; }
+
+  /* Product results */
+  .results-intro{
+    font-size: 14px; color: var(--ink-soft); margin: 4px 0 2px 40px;
+  }
+  .product-grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 14px;
+    margin: 8px 0 4px 40px;
+    max-width: 700px;
+  }
+  .product-card{
+    display: block;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    box-shadow: var(--shadow);
+    animation: pop-in 0.3s ease;
+    color: inherit;
+    text-decoration: none;
+    transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+  }
+  .product-card:hover,
+  .product-card:focus-visible{
+    transform: translateY(-3px);
+    border-color: var(--violet-deep);
+    box-shadow: 0 8px 22px rgba(108,92,231,0.18);
+  }
+  .product-card:focus-visible{
+    outline: 2px solid var(--violet-deep);
+    outline-offset: 2px;
+  }
+  .product-foot{
+    display:flex; align-items:baseline; justify-content:space-between; gap: 8px;
+    margin-top: 2px;
+  }
+  .product-link{
+    font-size: 12.5px; font-weight: 600; color: var(--violet-deep);
+    white-space: nowrap;
+  }
+  .product-card:hover .product-link{ text-decoration: underline; }
+  .product-over{
+    display:block;
+    font-size: 11.5px; font-weight: 600; color: #C2410C;
+    margin-top: 6px;
+  }
+  .product-swatch{
+    width: 100%; height: 68px;
+    border-radius: var(--radius-sm);
+    display:flex; align-items:center; justify-content:center;
+    font-size: 28px;
+    margin-bottom: 12px;
+  }
+  .product-name{ font-weight: 600; font-size: 14px; margin: 0 0 3px; }
+  .product-meta{ font-size: 12.5px; color: var(--ink-soft); margin: 0 0 8px; }
+  .product-price{ font-weight: 700; color: var(--violet-deep); font-size: 15px; }
+
+  .composer{
+    border-top: 1px solid var(--line);
+    background: var(--panel);
+    padding: 16px clamp(20px, 6vw, 90px);
+    display:flex; gap: 10px;
+  }
+  .composer input{
+    flex:1;
+    border: 1.5px solid var(--line);
+    border-radius: 999px;
+    padding: 13px 18px;
+    font-family: 'Inter', sans-serif;
+    font-size: 14.5px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .composer input:focus{ border-color: var(--violet); }
+  .composer input:disabled{ background: #F6F4FC; color: #B4B0CC; }
+
+  .send-btn{
+    width: 46px; height: 46px; border-radius: 50%;
+    border: none;
+    background: var(--violet);
+    color: white;
+    display:flex; align-items:center; justify-content:center;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    flex-shrink: 0;
+  }
+  .send-btn:hover:not(:disabled){ background: var(--violet-deep); }
+  .send-btn:active:not(:disabled){ transform: scale(0.94); }
+  .send-btn:disabled{ background: #D9D5EE; cursor: default; }
+  .send-btn:focus-visible{ outline: 2px solid var(--violet-deep); outline-offset: 2px; }
+  .send-btn svg{ width: 18px; height: 18px; }
+
+  @media (max-width: 780px){
+    .app{ grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+    .companion-panel{
+      border-right:none; border-bottom: 1px solid var(--line);
+      flex-direction: row; align-items:center; padding: 16px 20px; gap: 16px;
+      overflow-x: auto;
+    }
+    .robot-stage{ padding: 0; }
+    .robot-wrap{ width: 64px; height: 64px; }
+    .robot-name{ display:none; }
+    .brand{ display:none; }
+    .slots{ min-width: 260px; padding: 12px 14px 2px; }
+    .restart-btn, .skip-btn{ margin: 0; white-space: nowrap; }
+    .chat-panel{ height: calc(100vh - 96px); }
+    .product-grid, .results-intro{ margin-left: 0; }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; }
+  }
+
+  /* ---------- Loading overlay ---------- */
+  .loading-overlay{
+    position: fixed; inset: 0;
+    background: var(--bg);
+    background-image:
+      radial-gradient(circle at 8% 12%, rgba(108,92,231,0.08), transparent 40%),
+      radial-gradient(circle at 92% 88%, rgba(0,201,154,0.08), transparent 40%);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap: 18px;
+    z-index: 100;
+    text-align: center;
+    padding: 20px;
+  }
+  .loading-overlay.hidden{ display:none; }
+  .loading-robot{ width: 108px; height: 108px; }
+  .loading-title{ font-size: 19px; font-weight: 600; }
+  .loading-sub{
+    font-size: 13.5px; color: var(--ink-soft);
+    max-width: 320px; line-height: 1.5;
+  }
+  .loading-sub code{
+    background: #EFEAFF; color: var(--violet-deep);
+    padding: 2px 6px; border-radius: 6px; font-size: 12.5px;
+  }
+  .loading-error{
+    margin-top: 4px;
+    background: #FFF1F2; color: #C43D5C;
+    border: 1px solid #FFD5DC;
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    font-size: 12.5px;
+    max-width: 340px;
+  }
+  .loading-error.hidden{ display:none; }
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-robot">
+    <svg viewBox="0 0 148 148" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <line x1="74" y1="18" x2="74" y2="30" stroke="#B7ACFF" stroke-width="4" stroke-linecap="round"/>
+      <circle cx="74" cy="14" r="7" fill="#FF8FA3" style="animation: pulse-ball 0.7s ease-in-out infinite"/>
+      <rect x="30" y="30" width="88" height="66" rx="26" fill="#6C5CE7"/>
+      <ellipse cx="58" cy="62" rx="7" ry="9" fill="#FBF8FF"/>
+      <ellipse cx="90" cy="62" rx="7" ry="9" fill="#FBF8FF"/>
+      <circle cx="58" cy="64" r="3.2" fill="#1D1B33"/>
+      <circle cx="90" cy="64" r="3.2" fill="#1D1B33"/>
+      <path d="M62 82 Q74 90 86 82" stroke="#FBF8FF" stroke-width="4" stroke-linecap="round" fill="none"/>
+      <rect x="42" y="98" width="64" height="42" rx="16" fill="#5541D8"/>
+      <rect x="58" y="110" width="32" height="18" rx="6" fill="#00C99A" style="animation: screen-glow 0.7s ease-in-out infinite"/>
+      <circle cx="38" cy="118" r="6" fill="#B7ACFF"/>
+      <circle cx="110" cy="118" r="6" fill="#B7ACFF"/>
+    </svg>
+  </div>
+  <div class="loading-title" id="loadingTitle">Waking Pip up…</div>
+  <div class="loading-sub" id="loadingSub">
+    Loading the model. This can take a minute the first time you run it.
+  </div>
+  <div class="loading-error hidden" id="loadingError"></div>
+</div>
+
+<div class="app">
+
+  <!-- Companion panel -->
+  <aside class="companion-panel">
+    <div class="brand">
+      <span class="brand-dot"></span>
+      <span>Shopping companion</span>
+    </div>
+
+    <div class="robot-stage">
+      <div class="robot-wrap" id="robotWrap">
+        <svg viewBox="0 0 148 148" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- antenna -->
+          <line x1="74" y1="18" x2="74" y2="30" stroke="#B7ACFF" stroke-width="4" stroke-linecap="round"/>
+          <circle class="antenna-ball" cx="74" cy="14" r="7" fill="#FF8FA3"/>
+          <!-- head -->
+          <rect x="30" y="30" width="88" height="66" rx="26" fill="#6C5CE7"/>
+          <rect x="30" y="30" width="88" height="66" rx="26" fill="url(#headGrad)" opacity="0.25"/>
+          <!-- eyes -->
+          <g>
+            <ellipse class="eye" cx="58" cy="62" rx="7" ry="9" fill="#FBF8FF"/>
+            <ellipse class="eye" cx="90" cy="62" rx="7" ry="9" fill="#FBF8FF"/>
+            <circle cx="58" cy="64" r="3.2" fill="#1D1B33"/>
+            <circle cx="90" cy="64" r="3.2" fill="#1D1B33"/>
+          </g>
+          <!-- blush -->
+          <ellipse cx="44" cy="78" rx="6" ry="3.5" fill="#FF8FA3" opacity="0.5"/>
+          <ellipse cx="104" cy="78" rx="6" ry="3.5" fill="#FF8FA3" opacity="0.5"/>
+          <!-- mouth -->
+          <path d="M62 82 Q74 90 86 82" stroke="#FBF8FF" stroke-width="4" stroke-linecap="round" fill="none"/>
+          <!-- body -->
+          <rect x="42" y="98" width="64" height="42" rx="16" fill="#5541D8"/>
+          <rect class="body-screen" x="58" y="110" width="32" height="18" rx="6" fill="#00C99A"/>
+          <!-- side nubs -->
+          <circle cx="38" cy="118" r="6" fill="#B7ACFF"/>
+          <circle cx="110" cy="118" r="6" fill="#B7ACFF"/>
+          <defs>
+            <linearGradient id="headGrad" x1="30" y1="30" x2="118" y2="96" gradientUnits="userSpaceOnUse">
+              <stop stop-color="white" stop-opacity="0.4"/>
+              <stop offset="1" stop-color="white" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <div class="robot-name">Pip</div>
+      <div class="robot-status">
+        <span id="statusText">getting ready…</span>
+        <span class="status-dots hidden" id="statusDots"><span></span><span></span><span></span></span>
+      </div>
+    </div>
+
+    <div class="slots">
+      <h3>What I know so far</h3>
+      <div class="slot-row"><span class="slot-label">Category</span><span class="slot-value empty" id="slot-category">—</span></div>
+      <div class="slot-row"><span class="slot-label">Budget</span><span class="slot-value empty" id="slot-budget">—</span></div>
+      <div class="slot-row"><span class="slot-label">Brand</span><span class="slot-value empty" id="slot-brand">—</span></div>
+      <div class="slot-row"><span class="slot-label">Usage</span><span class="slot-value empty" id="slot-usage">—</span></div>
+    </div>
+
+    <button class="skip-btn" id="skipBtn" disabled title="Show recommendations from what you've told me so far">Skip ahead to recommendations</button>
+    <button class="restart-btn" id="restartBtn">Start a new search</button>
+  </aside>
+
+  <!-- Chat panel -->
+  <main class="chat-panel">
+    <div class="chat-log" id="chatLog"></div>
+    <form class="composer" id="composerForm">
+      <input id="userInput" type="text" placeholder="Type your answer…" autocomplete="off" disabled>
+      <button class="send-btn" id="sendBtn" type="submit" disabled aria-label="Send">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 12L20 4L13 20L11 13L4 12Z" fill="white"/></svg>
+      </button>
+    </form>
+  </main>
+
+</div>
+
+<script>
+(function(){
+  // ---------------- Mock catalog ----------------
+  const CATALOG = [
+    { name:"TrailBlaze Runner", q:"Nike trail running shoes", category:"running shoes", brand:"Nike", price:120, usage:"running", terrain:"trail", icon:"👟", color:"#FFE3E9" },
+    { name:"UrbanStride Sneaker", q:"Adidas casual sneakers", category:"sneakers", brand:"Adidas", price:90, usage:"casual", terrain:"road", icon:"👟", color:"#E7F7F0" },
+    { name:"CloudWalk Runner", q:"Puma road running shoes", category:"running shoes", brand:"Puma", price:75, usage:"running", terrain:"road", icon:"👟", color:"#EDEBFF" },
+    { name:"Summit Hiker Boot", q:"Columbia waterproof hiking boots", category:"hiking boots", brand:"Columbia", price:140, usage:"hiking", terrain:"trail", icon:"🥾", color:"#FFF3E0" },
+    { name:"Classic Denim Jacket", q:"Levi's classic denim trucker jacket", category:"jacket", brand:"Levi's", price:85, usage:"casual", terrain:null, icon:"🧥", color:"#E7F0FF" },
+    { name:"Featherlight Rain Shell", q:"Columbia lightweight waterproof rain jacket", category:"jacket", brand:"Columbia", price:110, usage:"outdoor", terrain:"trail", icon:"🧥", color:"#E7F7F0" },
+    { name:"Everyday Slim Jeans", q:"Levi's slim fit jeans", category:"jeans", brand:"Levi's", price:60, usage:"casual", terrain:null, icon:"👖", color:"#EDEBFF" },
+    { name:"FlexFit Yoga Leggings", q:"Lululemon yoga leggings", category:"leggings", brand:"Lululemon", price:68, usage:"yoga", terrain:null, icon:"🩳", color:"#FFE3E9" },
+    { name:"Minimalist Dial Watch", q:"Fossil minimalist dress watch", category:"watch", brand:"Fossil", price:130, usage:"formal", terrain:null, icon:"⌚", color:"#FFF3E0" },
+    { name:"Sport Chrono Watch", q:"Casio chronograph sport watch", category:"watch", brand:"Casio", price:55, usage:"sport", terrain:null, icon:"⌚", color:"#E7F0FF" },
+    { name:"Pearl Drop Earrings", q:"Pandora pearl drop earrings", category:"jewelry", brand:"Pandora", price:45, usage:"formal", terrain:null, icon:"💎", color:"#FFE3E9" },
+    { name:"Layered Chain Necklace", q:"handmade layered chain necklace", category:"jewelry", brand:"Local Craft", price:35, usage:"casual", terrain:null, icon:"📿", color:"#EDEBFF" },
+    { name:"Everyday Tote Bag", q:"Fossil leather tote bag", category:"bag", brand:"Fossil", price:95, usage:"casual", terrain:null, icon:"👜", color:"#E7F7F0" },
+    { name:"Weekender Duffel", q:"Columbia weekender duffel bag", category:"bag", brand:"Columbia", price:88, usage:"travel", terrain:null, icon:"🎒", color:"#FFF3E0" },
+    { name:"Slim Fit Chino", q:"Dockers slim fit chino pants", category:"pants", brand:"Dockers", price:55, usage:"work", terrain:null, icon:"👖", color:"#E7F0FF" },
+    { name:"Cozy Knit Sweater", q:"Gap knit crewneck sweater", category:"sweater", brand:"Gap", price:65, usage:"casual", terrain:null, icon:"🧶", color:"#FFE3E9" },
+    { name:"Court Classic Sneaker", q:"Adidas court sneakers white", category:"sneakers", brand:"Adidas", price:70, usage:"casual", terrain:"road", icon:"👟", color:"#EDEBFF" },
+    { name:"Trail Grip Sandal", q:"Teva hiking sandals", category:"sandals", brand:"Teva", price:50, usage:"outdoor", terrain:"trail", icon:"🩴", color:"#E7F7F0" },
+    { name:"Statement Hoop Earrings", q:"gold statement hoop earrings", category:"jewelry", brand:"Local Craft", price:28, usage:"casual", terrain:null, icon:"💍", color:"#FFF3E0" },
+    { name:"Performance Running Shorts", q:"Nike running shorts", category:"shorts", brand:"Nike", price:40, usage:"running", terrain:null, icon:"🩳", color:"#E7F0FF" },
+
+    // Electronics
+    { name:"Pixel Lite 8", q:"Google Pixel 8a", category:"phone", brand:"Google", price:499, usage:"everyday", terrain:null, icon:"📱", color:"#E7F0FF" },
+    { name:"Galaxy A55", q:"Samsung Galaxy A55 5G", category:"phone", brand:"Samsung", price:399, usage:"everyday", terrain:null, icon:"📱", color:"#E7F7F0" },
+    { name:"iPhone 15", q:"Apple iPhone 15 128GB", category:"phone", brand:"Apple", price:799, usage:"everyday", terrain:null, icon:"📱", color:"#EDEBFF" },
+    { name:"Redmi Note 13", q:"Xiaomi Redmi Note 13", category:"phone", brand:"Xiaomi", price:229, usage:"budget", terrain:null, icon:"📱", color:"#FFF3E0" },
+    { name:"Galaxy S24 Ultra", q:"Samsung Galaxy S24 Ultra 256GB", category:"phone", brand:"Samsung", price:1199, usage:"photography", terrain:null, icon:"📱", color:"#FFE3E9" },
+    { name:"Nord Buds 3", q:"OnePlus Nord Buds 3", category:"earbuds", brand:"OnePlus", price:59, usage:"everyday", terrain:null, icon:"🎧", color:"#E7F7F0" },
+    { name:"StudioSound Over-Ear", q:"Sony noise cancelling over-ear headphones", category:"headphones", brand:"Sony", price:249, usage:"music", terrain:null, icon:"🎧", color:"#EDEBFF" },
+    { name:"AirLight Laptop 14", q:"Asus 14 inch laptop 16GB RAM", category:"laptop", brand:"Asus", price:749, usage:"work", terrain:null, icon:"💻", color:"#E7F0FF" },
+    { name:"ProBook Creator 16", q:"Dell 16 inch creator laptop RTX", category:"laptop", brand:"Dell", price:1399, usage:"design", terrain:null, icon:"💻", color:"#FFF3E0" },
+    { name:"TabView 11", q:"Samsung Galaxy Tab 11 inch", category:"tablet", brand:"Samsung", price:329, usage:"reading", terrain:null, icon:"📲", color:"#FFE3E9" },
+    { name:"PulseFit Smartwatch", q:"Fitbit fitness smartwatch heart rate", category:"smartwatch", brand:"Fitbit", price:179, usage:"fitness", terrain:null, icon:"⌚", color:"#E7F7F0" },
+    { name:"ClearView 24 FHD", q:"Acer 24 inch FHD 1080p monitor", category:"monitor", brand:"Acer", price:129, usage:"work", terrain:null, icon:"🖥️", color:"#E7F0FF" },
+    { name:"UltraWide 34 Curved", q:"LG 34 inch ultrawide curved monitor", category:"monitor", brand:"LG", price:549, usage:"work", terrain:null, icon:"🖥️", color:"#EDEBFF" },
+    { name:"ProColor 27 4K", q:"Dell 27 inch 4K UHD monitor", category:"monitor", brand:"Dell", price:379, usage:"design", terrain:null, icon:"🖥️", color:"#FFF3E0" },
+    { name:"RapidPlay 27 165Hz", q:"Asus 27 inch 165Hz gaming monitor", category:"monitor", brand:"Asus", price:249, usage:"gaming", terrain:null, icon:"🖥️", color:"#FFE3E9" }
+  ];
+
+  // Words users actually type, mapped onto the catalog's own category names.
+  // Without this, "iphone" or "mobile" would match nothing.
+  const CATEGORY_ALIASES = {
+    phone:      ["phone","phones","smartphone","mobile","cell","iphone","android"],
+    laptop:     ["laptop","notebook","computer","macbook","pc"],
+    tablet:     ["tablet","ipad"],
+    monitor:    ["monitor","display","screen"],
+    headphones: ["headphones","headset","over-ear"],
+    earbuds:    ["earbuds","earphones","buds","airpods"],
+    smartwatch: ["smartwatch","fitness tracker","fitness band","watch"],
+    "running shoes": ["shoes","running shoes","runners","trainers","footwear"],
+    sneakers:   ["shoes","sneakers","trainers","kicks","footwear"],
+    "hiking boots": ["boots","hiking boots","footwear"],
+    sandals:    ["sandals","flip flops","footwear"],
+    jacket:     ["jacket","coat","outerwear"],
+    jeans:      ["jeans","denim"],
+    jewelry:    ["jewelry","jewellery","earrings","necklace"],
+    bag:        ["bag","backpack","tote","luggage"]
+  };
+
+  // ---------------- State ----------------
+  let conversation = [];   // array of {role:'user'|'bot', text:'...'}
+  let turnCount = 0;
+  let ready = false;
+  const MAX_TURNS = 8;
+
+  // ---------------- DOM refs ----------------
+  const chatLog = document.getElementById('chatLog');
+  const composerForm = document.getElementById('composerForm');
+  const userInput = document.getElementById('userInput');
+  const sendBtn = document.getElementById('sendBtn');
+  const statusText = document.getElementById('statusText');
+  const statusDots = document.getElementById('statusDots');
+  const robotWrap = document.getElementById('robotWrap');
+  const restartBtn = document.getElementById('restartBtn');
+  const skipBtn = document.getElementById('skipBtn');
+
+  const BOT_ICON_SVG = '<svg viewBox="0 0 24 24" fill="none"><rect x="4" y="6" width="16" height="12" rx="5" fill="#FBF8FF"/><circle cx="9" cy="12" r="1.6" fill="#1D1B33"/><circle cx="15" cy="12" r="1.6" fill="#1D1B33"/><line x1="12" y1="2" x2="12" y2="6" stroke="#FBF8FF" stroke-width="1.6"/></svg>';
+  const USER_ICON_SVG = '<svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="4" fill="white"/><path d="M4 20c0-4.4 3.6-7 8-7s8 2.6 8 7" fill="white"/></svg>';
+
+  // ---------------- Helpers ----------------
+  function scrollToBottom(){
+    chatLog.scrollTop = chatLog.scrollHeight;
+  }
+
+  function addMessage(role, text){
+    const row = document.createElement('div');
+    row.className = 'msg-row ' + (role === 'user' ? 'user' : 'bot');
+    row.innerHTML = `
+      <div class="msg-avatar">${role === 'user' ? USER_ICON_SVG : BOT_ICON_SVG}</div>
+      <div class="bubble"></div>
+    `;
+    row.querySelector('.bubble').textContent = text;
+    chatLog.appendChild(row);
+    scrollToBottom();
+  }
+
+  function showTyping(){
+    const row = document.createElement('div');
+    row.className = 'msg-row bot typing-row';
+    row.id = 'typingRow';
+    row.innerHTML = `
+      <div class="msg-avatar">${BOT_ICON_SVG}</div>
+      <div class="typing-bubble"><span></span><span></span><span></span></div>
+    `;
+    chatLog.appendChild(row);
+    scrollToBottom();
+  }
+  function hideTyping(){
+    const row = document.getElementById('typingRow');
+    if (row) row.remove();
+  }
+
+  function setStatus(text, isThinking){
+    statusText.textContent = text;
+    statusDots.classList.toggle('hidden', !isThinking);
+    robotWrap.classList.toggle('thinking', !!isThinking);
+  }
+
+  function blinkRobot(){
+    robotWrap.classList.add('blinking');
+    setTimeout(() => robotWrap.classList.remove('blinking'), 220);
+  }
+  setInterval(() => { if (Math.random() < 0.6) blinkRobot(); }, 3200);
+
+  function setInputEnabled(enabled){
+    userInput.disabled = !enabled;
+    sendBtn.disabled = !enabled;
+    if (enabled) userInput.focus();
+  }
+
+  // Three states, not two: unknown (dash), left open ("Any"), and a real
+  // answer. The backend sends "Any" for a slot the user was asked about and
+  // didn't want to narrow, so the panel stops showing a dash forever.
+  function fillSlot(id, value){
+    const el = document.getElementById(id);
+    const text = (value === null || value === undefined) ? '' : String(value).trim();
+
+    if (text === '' || text.toLowerCase() === 'none') {
+      el.textContent = '—';
+      el.classList.add('empty');
+      el.classList.remove('filled', 'open');
+    } else {
+      el.textContent = (typeof value === 'number') ? ('$' + value) : text;
+      el.classList.remove('empty');
+      el.classList.toggle('open', text.toLowerCase() === 'any');
+      el.classList.add('filled');
+    }
+  }
+
+  // ---------------- Backend API ----------------
+  // Same-origin now: this page is served by app.py itself, so requests
+  // just go to relative paths like /api/chat.
+  const BACKEND_URL = "";
+
+  async function callBackend(path, payload){
+    const response = await fetch(BACKEND_URL + path, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    if (!response.ok) {
+      const detail = await response.json().catch(() => ({}));
+      throw new Error(detail.error || `Backend returned ${response.status}`);
+    }
+    return response.json();
+  }
+
+  async function checkHealth(){
+    const response = await fetch(BACKEND_URL + "/api/health");
+    return response.json();
+  }
+
+  // ---------------- Turn logic ----------------
+  async function handleUserTurn(text){
+    conversation.push({ role: 'user', text });
+    addMessage('user', text);
+    turnCount++;
+
+    // There's something to recommend from now on, so let them bail out.
+    skipBtn.disabled = false;
+
+    setInputEnabled(false);
+    setStatus('thinking', true);
+    showTyping();
+
+    try {
+      const forceFinish = turnCount >= MAX_TURNS;
+      const { reply } = await callBackend('/api/chat', { conversation, force_finish: forceFinish });
+      if (ready) return;   // they hit "skip ahead" while this was in flight
+      hideTyping();
+
+      if (/SEARCH_READY/i.test(reply)) {
+        await finishAndRecommend();
+      } else {
+        conversation.push({ role: 'bot', text: reply });
+        addMessage('bot', reply);
+        setStatus('listening…', false);
+        setInputEnabled(true);
+      }
+    } catch (err) {
+      if (ready) return;
+      hideTyping();
+      addMessage('bot', "Hmm, I lost my train of thought — mind trying that again? (" + err.message + ")");
+      setStatus('listening…', false);
+      setInputEnabled(true);
+    }
+  }
+
+  // "Skip ahead to recommendations" — jump straight to results using whatever
+  // has been gathered so far, however little that is.
+  async function skipToRecommendations(){
+    if (ready || skipBtn.disabled) return;
+    skipBtn.disabled = true;
+    ready = true;                 // stop further sends racing with this
+    hideTyping();
+    setInputEnabled(false);
+    addMessage('bot', "Sure — here's what I can suggest from what you've told me so far.");
+    await finishAndRecommend();
+  }
+
+  async function finishAndRecommend(){
+    setStatus('putting it together…', true);
+    let requirements;
+    try {
+      requirements = await callBackend('/api/extract', { conversation });
+    } catch (err) {
+      requirements = { category: null, brand: null, usage: null, terrain: null, budget: null };
+    }
+
+    // Recover a category the model failed to extract, before ranking — an
+    // empty category silently disables the category filter entirely.
+    if (!requirements.category) {
+      requirements.category = guessCategory(conversation);
+    }
+
+    fillSlot('slot-category', requirements.category);
+    fillSlot('slot-budget', requirements.budget);
+    fillSlot('slot-brand', requirements.brand);
+    fillSlot('slot-usage', requirements.usage);
+
+    addMessage('bot', "Got it! Let me find some great matches for you…");
+
+    const { products, relaxed } = rankProducts(requirements);
+    renderProductResults(products.slice(0, 4), requirements.budget, relaxed);
+
+    ready = true;
+    skipBtn.disabled = true;
+    setStatus('found some picks ✨', false);
+    setInputEnabled(false);
+  }
+
+  // ---------------- Recommendation ----------------
+  // How far from the stated budget a suggestion is allowed to sit. Below the
+  // floor the pick isn't answering the question that was asked — "around
+  // $1500" doesn't mean a $229 phone. Above the ceiling we'd be pushing the
+  // user to overspend, so a stretch pick gets 5% and no more.
+  const BUDGET_FLOOR = 0.90;
+  const BUDGET_CEILING = 1.05;
+
+  function rankProducts(req){
+    const norm = v => (v === null || v === undefined) ? null : String(v).toLowerCase();
+    const category = norm(req.category);
+    const brand = norm(req.brand);
+    const usage = norm(req.usage);
+    const terrain = norm(req.terrain);
+    const budget = (typeof req.budget === 'number') ? req.budget : (parseFloat(req.budget) || null);
+
+    const scored = CATALOG.map(p => {
+      const catMatch = !!category && categoryMatches(p.category, category);
+
+      // Everything except budget — budget alone says nothing about whether a
+      // product is the right *kind* of thing.
+      let signal = 0;
+      if (brand && p.brand.toLowerCase() === brand) signal += 3;
+      if (usage && p.usage.toLowerCase() === usage) signal += 2;
+      if (terrain && p.terrain && p.terrain.toLowerCase() === terrain) signal += 1.5;
+
+      let score = signal + (catMatch ? 5 : 0);
+      if (budget) {
+        // Closeness to the budget, so the pick that uses it best leads. The two
+        // arms don't overlap: anything that fits scores at least 3.8, anything
+        // over scores at most 0, so a stretch pick is never ranked above one
+        // that fits — not even when the brand matches.
+        const ratio = p.price / budget;
+        score += (ratio <= 1) ? 2 + 2 * ratio : -4 * (ratio - 1);
+      }
+      return { product: p, score, catMatch, signal };
+    });
+
+    // The budget is a window, not just a scoring nudge. A flat "is it under
+    // budget" test let a $229 phone answer "around $1500", so prices outside
+    // BUDGET_FLOOR..BUDGET_CEILING are now dropped outright.
+    const inWindow = x => !budget || (
+      x.product.price >= budget * BUDGET_FLOOR &&
+      x.product.price <= budget * BUDGET_CEILING
+    );
+
+    // Rank a pool, preferring the budget window but never dead-ending on it:
+    // if the catalog has nothing in range we hand back the nearest prices and
+    // flag it, so the intro line can say these missed the range rather than
+    // showing an empty grid.
+    function ranked(pool){
+      if (!pool.length) return { products: [], relaxed: false };
+
+      const fits = pool.filter(inWindow);
+      if (fits.length) {
+        return { products: fits.sort((a, b) => b.score - a.score).map(x => x.product), relaxed: false };
+      }
+
+      const nearest = pool.slice().sort((a, b) =>
+        Math.abs(a.product.price - budget) - Math.abs(b.product.price - budget));
+      return { products: nearest.map(x => x.product), relaxed: true };
+    }
+
+    // Category is a hard filter, not a bonus. Previously every product was
+    // returned sorted by score, so a category we don't stock (say "phone")
+    // left everything tied and the caller's slice(0,4) just handed back the
+    // first four rows of the catalog — which is why phones returned shoes.
+    if (category) {
+      return ranked(scored.filter(x => x.catMatch));
+    }
+
+    // No category at all. Rank on brand/usage/terrain if we have any of them,
+    // but never on budget alone: with only a budget every affordable product
+    // ties, and a stable sort just hands back the top of the catalog — which
+    // is how a jacket search once returned shoes, jeans, leggings and a watch.
+    return ranked(scored.filter(x => x.signal > 0));
+  }
+
+  // Lowercase, split on spaces/hyphens, and drop plural "s" so "phones" and
+  // "phone" are the same term.
+  function normalizeTerm(value){
+    return String(value).toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, ' ')
+      .split(/[\s-]+/)
+      .filter(Boolean)
+      .map(w => (w.length > 3 && w.endsWith('s') && !w.endsWith('ss')) ? w.slice(0, -1) : w)
+      .join(' ');
+  }
+
+  // Whole-word containment. Plain substring matching would make "phones"
+  // match "headphones", which is exactly the kind of false positive that put
+  // the wrong products on screen.
+  function containsTerm(haystack, needle){
+    return needle !== '' && (' ' + haystack + ' ').indexOf(' ' + needle + ' ') !== -1;
+  }
+
+  const CATALOG_CATEGORIES = CATALOG.map(p => p.category)
+    .filter((c, i, all) => all.indexOf(c) === i);
+
+  // Find which catalog category a sentence is talking about. Earliest mention
+  // wins, so "a laptop to watch movies on" resolves to laptop rather than
+  // smartwatch; a longer term breaks ties, so "running shoes" beats "shoes".
+  function categoryInText(text){
+    const hay = ' ' + normalizeTerm(text) + ' ';
+    let best = null;
+
+    CATALOG_CATEGORIES.forEach(cat => {
+      [cat].concat(CATEGORY_ALIASES[cat] || []).map(normalizeTerm).forEach(term => {
+        const at = hay.indexOf(' ' + term + ' ');
+        if (at === -1) return;
+        if (!best || at < best.at || (at === best.at && term.length > best.term.length)) {
+          best = { category: cat, at: at, term: term };
+        }
+      });
+    });
+
+    return best ? best.category : null;
+  }
+
+  // The model drops the category field often enough that we can't depend on
+  // it — when it does, read the category out of what the user actually typed.
+  // The first user message is the answer to "what are you shopping for?", so
+  // it gets first say.
+  function guessCategory(convo){
+    for (let i = 0; i < convo.length; i++) {
+      if (convo[i].role !== 'user') continue;
+      const found = categoryInText(convo[i].text || '');
+      if (found) return found;
+    }
+    return null;
+  }
+
+  function categoryMatches(catalogCategory, wanted){
+    const cat = normalizeTerm(catalogCategory);
+    const want = normalizeTerm(wanted);
+    if (!want) return false;
+    if (containsTerm(cat, want) || containsTerm(want, cat)) return true;
+    return (CATEGORY_ALIASES[catalogCategory] || [])
+      .map(normalizeTerm)
+      .some(a => containsTerm(want, a));
+  }
+
+  // The mock catalog has no real product pages, so a card links to a Google
+  // Shopping search. Linking on brand + category alone landed on "all Acer
+  // monitors", which is useless — so each catalog entry carries a `q` with the
+  // real-world terms for that exact spec ("Acer 24 inch FHD 1080p monitor"),
+  // and we pin the results to a price band around the card's price. When a real
+  // catalog is wired in, give each product a `url` and that wins outright.
+  //
+  // tbs filters: mr:1 enables the shopping refinements, price:1 turns the price
+  // filter on, ppr_min/ppr_max bound it, p_ord:p sorts cheapest first.
+  function productUrl(p, budget){
+    if (p.url) return p.url;
+
+    // Fall back to the display name only if no search terms were authored —
+    // invented model names ("ClearView 24 FHD") match nothing on their own, so
+    // the category and brand have to ride along.
+    const terms = p.q || [p.brand, p.name, p.category].filter(Boolean).join(' ');
+
+    const params = new URLSearchParams({ tbm: 'shop', hl: 'en', q: terms });
+
+    const price = parseFloat(p.price);
+    const limit = parseFloat(budget);
+
+    if (limit > 0) {
+      // Same window the suggestions were filtered on, so the Shopping results
+      // are the same shape as the card that opened them.
+      let min = Math.max(1, Math.floor(limit * BUDGET_FLOOR));
+      let max = Math.ceil(limit * BUDGET_CEILING);
+      // A relaxed fallback pick sits outside that window by definition; widen
+      // just enough that the search still contains the product on the card.
+      if (price > 0 && price < min) min = Math.max(1, Math.floor(price * 0.95));
+      if (price > 0 && price > max) max = Math.ceil(price * 1.05);
+      params.set('tbs', `mr:1,price:1,ppr_min:${min},ppr_max:${max},p_ord:p`);
+    } else if (price > 0) {
+      // No budget to work from — bracket the card's own price instead.
+      params.set('tbs', `mr:1,price:1,ppr_min:${Math.max(1, Math.floor(price * 0.75))},ppr_max:${Math.ceil(price * 1.25)},p_ord:p`);
+    }
+
+    return 'https://www.google.com/search?' + params.toString();
+  }
+
+  function renderProductResults(products, budget, relaxed){
+    const limit = (typeof budget === 'number') ? budget : parseFloat(budget) || null;
+
+    const intro = document.createElement('div');
+    intro.className = 'results-intro';
+    if (!products.length) {
+      intro.textContent = "I couldn't find a close match — try a new search!";
+    } else if (relaxed && limit) {
+      // Be explicit that these fell outside the range rather than quietly
+      // presenting them as if they'd matched it.
+      intro.textContent = `Nothing I have lands close to $${Math.round(limit)} — here's the nearest I found:`;
+    } else {
+      intro.textContent = "Here's what caught my eye:";
+    }
+    chatLog.appendChild(intro);
+
+    if (products.length) {
+      const grid = document.createElement('div');
+      grid.className = 'product-grid';
+      products.forEach(p => {
+        const card = document.createElement('a');
+        card.className = 'product-card';
+        card.href = productUrl(p, limit);
+        card.target = '_blank';
+        card.rel = 'noopener noreferrer';
+        card.title = 'Shop for ' + (p.q || p.name) + ' on Google Shopping';
+
+        const over = limit && p.price > limit
+          ? `<span class="product-over">$${Math.round(p.price - limit)} over your budget</span>`
+          : '';
+
+        card.innerHTML = `
+          <div class="product-swatch" style="background:${p.color}">${p.icon}</div>
+          <p class="product-name"></p>
+          <p class="product-meta"></p>
+          <div class="product-foot">
+            <span class="product-price">$${p.price}</span>
+            <span class="product-link">View →</span>
+          </div>
+          ${over}
+        `;
+        card.querySelector('.product-name').textContent = p.name;
+        card.querySelector('.product-meta').textContent = p.brand + ' · ' + p.category;
+        grid.appendChild(card);
+      });
+      chatLog.appendChild(grid);
+    }
+    scrollToBottom();
+  }
+
+  // ---------------- Init / restart ----------------
+  function resetConversation(){
+    conversation = [];
+    turnCount = 0;
+    ready = false;
+    skipBtn.disabled = true;   // nothing to skip to yet
+    chatLog.innerHTML = '';
+    ['slot-category','slot-budget','slot-brand','slot-usage'].forEach(id => fillSlot(id, null));
+    const greeting = "Hi! I'm Pip 👋 What are you shopping for today?";
+    conversation.push({ role: 'bot', text: greeting });
+    addMessage('bot', greeting);
+    setStatus('listening…', false);
+    setInputEnabled(true);
+  }
+
+  composerForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const text = userInput.value.trim();
+    if (!text || ready) return;
+    userInput.value = '';
+    handleUserTurn(text);
+  });
+
+  restartBtn.addEventListener('click', resetConversation);
+  skipBtn.addEventListener('click', skipToRecommendations);
+
+  // ---------------- Boot sequence: wait for the backend + model ----------------
+  const loadingOverlay = document.getElementById('loadingOverlay');
+  const loadingTitle = document.getElementById('loadingTitle');
+  const loadingError = document.getElementById('loadingError');
+
+  let pollAttempts = 0;
+
+  async function pollUntilReady(){
+    pollAttempts++;
+    try {
+      const health = await checkHealth();
+      if (health.status === 'ready') {
+        loadingOverlay.classList.add('hidden');
+        setStatus('waking up…', true);
+        resetConversation();
+        return;
+      }
+      if (health.status === 'error') {
+        loadingTitle.textContent = "Pip's model hit a snag";
+        loadingError.textContent = health.detail || 'The model failed to load — check the terminal running app.py.';
+        loadingError.classList.remove('hidden');
+        return; // stop polling, this needs a restart
+      }
+      // still loading — keep polling
+      loadingTitle.textContent = pollAttempts > 6 ? 'Still loading the model…' : 'Waking Pip up…';
+      setTimeout(pollUntilReady, 1500);
+    } catch (err) {
+      loadingTitle.textContent = "Having trouble reaching the server…";
+      loadingError.textContent = 'Check the terminal window running app.py for errors.';
+      loadingError.classList.remove('hidden');
+      setTimeout(pollUntilReady, 1500);
+    }
+  }
+
+  setStatus('waking up…', true);
+  pollUntilReady();
+})();
+</script>
+
+</body>
+</html>
