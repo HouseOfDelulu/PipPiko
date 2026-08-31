@@ -38,6 +38,8 @@ flask
 transformers
 accelerate
 torch
+
+
 ▶️ Running the Application
 
 Start PipPiko using:
