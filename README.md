@@ -113,12 +113,12 @@ After enough information has been collected, Pip returns:
 
 SEARCH_READY
 
-The interface then displays product suggestions from the mock catalogue.
+The interface then displays product suggestions from the catalogue.
 
 
 
 Current Limitations
-1. Product recommendations currently come from a mock catalogue.
+1. Product recommendations currently come from a catalogue.
 2. Product prices and availability are not live.
 3. There is no connection to real-time e-commerce platforms.
 
