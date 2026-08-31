@@ -5,6 +5,25 @@ Pip first tries to understand what the user is actually looking for by gathering
 
 Once enough information has been collected, Pip provides product suggestions based on the extracted requirements.
 
+🎯 Project Goal
+The goal of PipPiko is to explore how conversational AI can improve the online shopping experience even better!
+
+Traditional shopping search often requires users to know exactly what they want before searching. But what if AI helps to improve search by understanding whether a user is buying or browsing?
+
+PipPiko takes a different approach:
+
+User's Intent
+     ↓
+Conversation
+     ↓
+Requirements
+     ↓
+Product Discovery
+     ↓
+Recommendations
+
+By asking targeted questions, PipPiko aims to make product discovery more natural, accessible and efficient.
+
 ⚙️ Requirements to Install
 Before installing Pip, make sure you have:
 
@@ -95,4 +114,16 @@ After enough information has been collected, Pip returns:
 SEARCH_READY
 
 The interface then displays product suggestions from the mock catalogue.
+
+
+
+Current Limitations
+1. Product recommendations currently come from a mock catalogue.
+2. Product prices and availability are not live.
+3. There is no connection to real-time e-commerce platforms.
+
+Future Improvements
+1. Real-time product prices
+2. Persistent conversation history
+3. Personalized user profiles
 
