@@ -127,3 +127,11 @@ Future Improvements
 2. Persistent conversation history
 3. Personalized user profiles
 
+👥 Team members:
+ - Abirami Baskaran
+
+ - Tileron Levi Jan Lacang
+
+
+
+🤖 Happy Shopping with PipPiko!
