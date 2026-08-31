@@ -5,20 +5,7 @@ Pip first tries to understand what the user is actually looking for by gathering
 
 Once enough information has been collected, Pip provides product suggestions based on the extracted requirements.
 
-📁 Project Structure
-pip_shopping_assistant/
-│
-├── app.py
-│   └── Main Flask application
-│
-├── requirements.txt
-│   └── Python dependencies
-│
-└── templates/
-    └── index.html
-        └── Frontend chat interface
-
-⚙️ Requirements
+⚙️ Requirements to Install
 Before installing Pip, make sure you have:
 
 Python 3
@@ -65,4 +52,26 @@ http://localhost:5000
 
 If the browser does not open automatically, manually navigate to the address above.
 
+🛒 Using PipPiko!!
+Once the model has loaded, enter what you are looking for into the chat interface.
+For example:
+I need a laptop for university.
+Pip will then ask follow-up questions to determine your requirements.
+Typical requirements include:
+    Product Category
+    What are you looking for?
+        Example: A laptop
+    What's your budget?
+        Example: Around $1,500
+    Brand Preference
+    Do you have a preferred brand?
+        Example: ASUS
+    Intended Use
+    What will you mainly use it for?
+        Example: Gaming and university work
+
+After enough information has been collected, Pip returns:
+
+SEARCH_READY
+The interface then displays product suggestions from the mock catalogue.
 
